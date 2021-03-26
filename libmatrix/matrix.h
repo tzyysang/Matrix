@@ -1,5 +1,5 @@
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef _MX_MATRIX_H
+#define _MX_MATRIX_H
 
 #include <vector>
 #include <iostream>
@@ -62,14 +62,15 @@ public:
     double operator()( int row, int col ) const;
     double operator()( int idx ) const;
     void print( std::ostream& os=std::cout ) const;
-    void reserve( int row, int col ){ _mat.reserve( row*col ); }
     void resize( int row, int col, double val=0.0 );
+    void reserve( int row, int col ){ _mat.reserve( row*col ); }
     std::tuple<int, int> size() const { return {_n_row, _n_col}; }
     int size( int dim ) const;
     int n_row() const { return _n_row; }
     int n_col() const { return _n_col; }
 };
 
+    /* in operation.cpp */
 std::ostream& operator<<( std::ostream& os, const Matrix& mat );
 Matrix operator+( const Matrix& mat1, const Matrix& mat2 );
 Matrix operator*( const Matrix& mat1, const Matrix& mat2 );

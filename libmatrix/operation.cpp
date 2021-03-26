@@ -42,4 +42,10 @@ Matrix operator*( const Matrix& mat1, const Matrix& mat2 )
     return res;
 }
 
+std::ostream& operator<<( std::ostream& os, const Matrix& mat )
+{
+    mat.print(os);
+    return os;
+}
+
 }

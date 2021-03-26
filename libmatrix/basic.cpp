@@ -3,11 +3,6 @@
 namespace mx
 {
 
-std::ostream& operator<<( std::ostream& os, const Matrix& mat )
-{
-    mat.print(os);
-    return os;
-}
 
 void Matrix::print( std::ostream& os ) const
 {
@@ -16,7 +11,7 @@ void Matrix::print( std::ostream& os ) const
     {
         for( int j=0; j<_n_col; j++ )
         {
-            os << std::setprecision(6) << std::setw(8) << _mat[ index(i,j) ];
+            os << std::setprecision(6) << std::setw(9) << _mat[ index(i,j) ];
         }
         os << std::endl;
     }
