@@ -28,11 +28,31 @@ Matrix::Matrix()
     _n_col = 0;
 }
 
+Matrix::Matrix( MatrixInitilizer mx_init )
+{
+    switch( mx_init.matrix_type )
+    {
+        case MatrixInitilizer::MxInitType::ZEROS:
+            resize( mx_init.size, mx_init.size, 0.0 );
+            break;
+        case MatrixInitilizer::MxInitType::EYE:
+            resize( mx_init.size, mx_init.size, 0.0 );
+            for( int i=0; i<mx_init.size; i++ )
+                (*this)(i,i) = 1.0;
+            break;
+        default:
+            assert( false && "Bad MatrixInitilizer type" );
+    }
+}
+
 Matrix::Matrix( int row, int col, double val )
 {
-    _n_row = row;
-    _n_col = col;
     resize( row, col, val );
+}
+
+Matrix::Matrix( std::tuple<int,int> s, double val )
+{
+    resize( std::get<0>(s), std::get<1>(s), val );
 }
 
 Matrix::Matrix( std::initializer_list<double> list )
@@ -102,4 +122,11 @@ void Matrix::resize( int row, int col, double val )
     _n_col = col;
     _mat.resize( row*col, val );
 }
+
+int Matrix::size( int dim ) const
+{
+    assert( dim==0 || dim==1 );
+    return (dim==0) ? _n_row : _n_col;
+}
+
 }

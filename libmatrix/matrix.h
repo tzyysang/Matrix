@@ -9,6 +9,33 @@
 namespace mx
 {
 
+struct MatrixInitilizer
+{
+    enum MxInitType{
+        ZEROS,
+        EYE
+    } matrix_type;
+    int size;
+};
+
+struct Zeros : public MatrixInitilizer
+{
+    Zeros( int s )
+    {
+        matrix_type = ZEROS;
+        size = s;
+    }
+};
+
+struct Eye : public MatrixInitilizer
+{
+    Eye( int s )
+    {
+        matrix_type = EYE;
+        size = s;
+    }
+};
+
 class Matrix
 {
     int _n_row;
@@ -24,7 +51,9 @@ class Matrix
 public:
     /* in basic.cpp */
     Matrix();
+    Matrix( MatrixInitilizer mx_init );
     Matrix( int row, int col, double val=0.0 );
+    Matrix( std::tuple<int,int>, double val=0.0 );
     Matrix( std::initializer_list<double> list );
     Matrix( std::initializer_list< std::initializer_list<double> > lists );
     Matrix( std::vector< std::vector<double> > vecs );
@@ -35,10 +64,18 @@ public:
     void print( std::ostream& os=std::cout ) const;
     void reserve( int row, int col ){ _mat.reserve( row*col ); }
     void resize( int row, int col, double val=0.0 );
+    std::tuple<int, int> size() const { return {_n_row, _n_col}; }
+    int size( int dim ) const;
+    int n_row() const { return _n_row; }
+    int n_col() const { return _n_col; }
 };
 
-
 std::ostream& operator<<( std::ostream& os, const Matrix& mat );
+Matrix operator+( const Matrix& mat1, const Matrix& mat2 );
+Matrix operator*( const Matrix& mat1, const Matrix& mat2 );
+Matrix operator-( const Matrix& mat1 );
+Matrix operator-( const Matrix& mat1, const Matrix& mat2 );
+
 }
 
 #endif
