@@ -3,15 +3,13 @@
 namespace mx
 {
 
-
 void Matrix::print( std::ostream& os ) const
 {
-    os ;
     for( int i=0; i<_n_row; i++ )
     {
         for( int j=0; j<_n_col; j++ )
         {
-            os << std::setprecision(6) << std::setw(9) << _mat[ index(i,j) ];
+            os << std::setprecision(6) << std::setw(10) << _mat[ index(i,j) ];
         }
         os << std::endl;
     }
@@ -27,13 +25,25 @@ Matrix::Matrix( MatrixInitilizer mx_init )
 {
     switch( mx_init.matrix_type )
     {
-        case MatrixInitilizer::MxInitType::ZEROS:
+        case MatInit::ZEROS:
             resize( mx_init.size, mx_init.size, 0.0 );
             break;
-        case MatrixInitilizer::MxInitType::EYE:
+        case MatInit::EYE:
             resize( mx_init.size, mx_init.size, 0.0 );
             for( int i=0; i<mx_init.size; i++ )
                 (*this)(i,i) = 1.0;
+            break;
+        case MatInit::RAND:
+            init_mat_random( mx_init.size, []{ return _mat_rng.rand_1000(); }  );
+            break;
+        case MatInit::RAND_SYM:
+            init_mat_rand_sym( mx_init.size, []{ return _mat_rng.rand_10(); } );
+            break;
+        case MatInit::RAND_LOWTRI:
+            init_mat_rand_low_tri( mx_init.size, []{ return _mat_rng.rand_10(); } );
+            break;
+        case MatInit::RAND_SPD:
+            init_mat_rand_spd( mx_init.size, []{ return _mat_rng.rand_10(); } );
             break;
         default:
             assert( false && "Bad MatrixInitilizer type" );
@@ -122,6 +132,60 @@ int Matrix::size( int dim ) const
 {
     assert( dim==0 || dim==1 );
     return (dim==0) ? _n_row : _n_col;
+}
+
+Matrix Matrix::transpose() const
+{
+    auto [row, col] = size();
+    assert( row>0 && col>0 );
+    Matrix res(col,row);
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<col; j++ )
+            res(j,i) = (*this)(i,j);
+    return res;
+}
+
+template<typename F>
+void Matrix::init_mat_random( int n, F&& rand )
+{
+    resize( n, n );
+    for( int i=0; i<n; i++ )
+        for( int j=0; j<n; j++ )
+            _mat[ index(i,j) ] = rand();
+}
+
+template<typename F>
+void Matrix::init_mat_rand_sym( int n, F&& rand )
+{
+    init_mat_rand_low_tri( n, rand );
+
+    for( int i=0; i<n-1; i++ )
+        for( int j=i+1; j<n; j++ )
+            _mat[ index(i,j) ] = _mat[ index(j,i) ];
+}
+
+template<typename F>
+void Matrix::init_mat_rand_low_tri( int n, F&& rand )
+{
+    resize( n, n );
+    for( int i=0; i<n; i++ )
+        for( int j=0; j<=i; j++ )
+            _mat[ index(i,j) ] = rand();
+}
+
+template<typename F>
+void Matrix::init_mat_rand_spd( int n, F&& rand )
+{
+    Matrix mat_l( mx::MatInit( mx::MatInit::RAND_LOWTRI, n ) );
+    resize( n, n );
+    for( int i=0; i<n; i++ )
+        for( int j=0; j<=i; j++ )
+            for( int k=0; k<=j; k++ )
+                _mat[ index(i,j) ] += mat_l(j,k) * mat_l(i,k);
+
+    for( int i=0; i<n-1; i++ )
+        for( int j=i+1; j<n; j++ )
+            _mat[ index(i,j) ] = _mat[ index(j,i) ];
 }
 
 }

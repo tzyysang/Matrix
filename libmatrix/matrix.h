@@ -5,51 +5,24 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+#include <functional>
+
+#include "matrix_init.h"
+#include "rand.h"
 
 namespace mx
 {
 
-struct MatrixInitilizer
-{
-    enum MxInitType{
-        ZEROS,
-        EYE
-    } matrix_type;
-    int size;
-};
-
-struct Zeros : public MatrixInitilizer
-{
-    Zeros( int s )
-    {
-        matrix_type = ZEROS;
-        size = s;
-    }
-};
-
-struct Eye : public MatrixInitilizer
-{
-    Eye( int s )
-    {
-        matrix_type = EYE;
-        size = s;
-    }
-};
 
 class Matrix
 {
     int _n_row;
     int _n_col;
     std::vector< double > _mat;
+    inline static RNG _mat_rng;
 
-    int index(int row, int col) const
-    {
-        assert( row>=0 && row<_n_row && col>=0 && col<_n_col );
-        return row*_n_col + col;
-    }
-
-public:
     /* in basic.cpp */
+public:
     Matrix();
     Matrix( MatrixInitilizer mx_init );
     Matrix( int row, int col, double val=0.0 );
@@ -68,6 +41,25 @@ public:
     int size( int dim ) const;
     int n_row() const { return _n_row; }
     int n_col() const { return _n_col; }
+    Matrix transpose() const;
+private:
+    template<typename F>
+    void init_mat_random( int n, F&& rand );
+    template<typename F>
+    void init_mat_rand_sym( int n, F&& rand );
+    template<typename F>
+    void init_mat_rand_low_tri( int n, F&& rand );
+    template<typename F>
+    void init_mat_rand_spd( int n, F&& rand );
+
+    /* inline functions */
+private:
+    int index(int row, int col) const
+    {
+        assert( row>=0 && row<_n_row && col>=0 && col<_n_col );
+        return row*_n_col + col;
+    }
+
 };
 
     /* in operation.cpp */
@@ -76,6 +68,9 @@ Matrix operator+( const Matrix& mat1, const Matrix& mat2 );
 Matrix operator*( const Matrix& mat1, const Matrix& mat2 );
 Matrix operator-( const Matrix& mat1 );
 Matrix operator-( const Matrix& mat1, const Matrix& mat2 );
+Matrix operator*( double scalar, const Matrix& mat );
+Matrix operator*( const Matrix& mat, double scalar );
+Matrix operator/( const Matrix& mat, double scalar );
 
 }
 

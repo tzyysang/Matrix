@@ -42,6 +42,32 @@ Matrix operator*( const Matrix& mat1, const Matrix& mat2 )
     return res;
 }
 
+Matrix operator*( double scalar, const Matrix& mat )
+{
+    auto [row, col] = mat.size();
+    Matrix res( row, col );
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<col; j++ )
+                res(i,j) = scalar * mat(i,j);
+    return res;
+}
+
+
+Matrix operator*( const Matrix& mat, double scalar )
+{
+    return scalar*mat;
+}
+
+Matrix operator/( const Matrix& mat, double scalar )
+{
+    auto [row, col] = mat.size();
+    Matrix res( row, col );
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<col; j++ )
+                res(i,j) = mat(i,j) / scalar;
+    return res;
+}
+
 std::ostream& operator<<( std::ostream& os, const Matrix& mat )
 {
     mat.print(os);
