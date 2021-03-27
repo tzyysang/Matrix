@@ -37,13 +37,13 @@ Matrix::Matrix( MatrixInitilizer mx_init )
             init_mat_random( mx_init.size, []{ return _mat_rng.rand_1000(); }  );
             break;
         case MatInit::RAND_SYM:
-            init_mat_rand_sym( mx_init.size, []{ return _mat_rng.rand_10(); } );
+            init_mat_rand_sym( mx_init.size, []{ return _mat_rng.rand_normal(); } );
             break;
         case MatInit::RAND_LOWTRI:
             init_mat_rand_low_tri( mx_init.size, []{ return _mat_rng.rand_10(); } );
             break;
         case MatInit::RAND_SPD:
-            init_mat_rand_spd( mx_init.size, []{ return _mat_rng.rand_10(); } );
+            init_mat_rand_spd( mx_init.size, []{ return _mat_rng.rand_1(); } );
             break;
         default:
             assert( false && "Bad MatrixInitilizer type" );
@@ -176,16 +176,22 @@ void Matrix::init_mat_rand_low_tri( int n, F&& rand )
 template<typename F>
 void Matrix::init_mat_rand_spd( int n, F&& rand )
 {
-    Matrix mat_l( mx::MatInit( mx::MatInit::RAND_LOWTRI, n ) );
-    resize( n, n );
+    init_mat_rand_low_tri( n, rand );
     for( int i=0; i<n; i++ )
-        for( int j=0; j<=i; j++ )
+        for( int j=0; j<i; j++ )
             for( int k=0; k<=j; k++ )
-                _mat[ index(i,j) ] += mat_l(j,k) * mat_l(i,k);
+                (*this)(j,i) += (*this)(j,k) * (*this)(i,k);
+    for( int i=0; i<n; i++ )
+    {
+        double sum = 0.0;
+        for( int k=0; k<=i; k++ )
+            sum += (*this)(i,k)*(*this)(i,k);
+        (*this)(i,i) = sum;
+    }
 
-    for( int i=0; i<n-1; i++ )
-        for( int j=i+1; j<n; j++ )
-            _mat[ index(i,j) ] = _mat[ index(j,i) ];
+    for( int i=0; i<n; i++ )
+        for( int j=0; j<i; j++ )
+            (*this)(i,j) = (*this)(j,i);
 }
 
 }
