@@ -136,11 +136,10 @@ int Matrix::size( int dim ) const
 
 Matrix Matrix::transpose() const
 {
-    auto [row, col] = size();
-    assert( row>0 && col>0 );
-    Matrix res(col,row);
-    for( int i=0; i<row; i++ )
-        for( int j=0; j<col; j++ )
+    assert( _n_row>0 && _n_col>0 );
+    Matrix res(_n_col,_n_row);
+    for( int i=0; i<_n_row; i++ )
+        for( int j=0; j<_n_col; j++ )
             res(j,i) = (*this)(i,j);
     return res;
 }
@@ -192,6 +191,35 @@ void Matrix::init_mat_rand_spd( int n, F&& rand )
     for( int i=0; i<n; i++ )
         for( int j=0; j<i; j++ )
             (*this)(i,j) = (*this)(j,i);
+}
+
+double Matrix::norm( int p )
+{
+    if( p<=0 ) return norm_inf();
+    if( p==1 ) return norm_1();
+
+    double res = 0.0;
+    for( int i=0; i<_n_row; i++ )
+        for( int j=0; j<_n_col; j++ )
+            res += std::pow( (*this)(i,j), p );
+
+    if( p==2 ) return std::sqrt( res );
+
+    return std::pow( res, 1.0/(double)p );
+}
+
+double Matrix::norm_1()
+{
+    double res = 0.0;
+    for( int i=0; i<_n_row; i++ )
+        for( int j=0; j<_n_col; j++ )
+            res += std::abs( (*this)(i,j) );
+    return res;
+}
+
+double Matrix::norm_inf()
+{
+    return std::abs( *(std::max_element( _mat.begin(), _mat.end(), [](double x, double y){ return std::abs(x)<std::abs(y); } )) );
 }
 
 }

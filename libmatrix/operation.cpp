@@ -27,7 +27,14 @@ Matrix operator-( const Matrix& mat1 )
 
 Matrix operator-( const Matrix& mat1, const Matrix& mat2 )
 {
-    return mat1 + (-mat2);
+    assert( mat1.size()==mat2.size() );
+    auto [row, col] = mat1.size();
+    Matrix res( row, col );
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<col; j++ )
+            res(i,j) = mat1(i,j) - mat2(i,j);
+
+    return res;
 }
 
 Matrix operator*( const Matrix& mat1, const Matrix& mat2 )

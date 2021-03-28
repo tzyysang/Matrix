@@ -3,44 +3,56 @@
 namespace mx
 {
 
-void LinearSolver::lu_decomp()
+int LinearSolver::lu_decomp()
 {
-    auto [row, col] = lu.size();
+    auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
     assert( row==col );
 
-    std::cout << "row=" << row << " col=" << col << std::endl;
+    for( int k=0; k<row-1; k++ )
+    {
+        double pivot = _mat(k,k);
+        if( pivot==0.0 ) return -1;
+        for( int i=k+1; i<row; i++ )
+            _mat(i,k) = _mat(i,k) / pivot;
+
+        for( int i=k+1; i<row; i++ )
+            for( int j=k+1; j<col; j++ )
+                _mat(i,j) = _mat(i,j) - _mat(i,k)*_mat(k,j);
+    }
+
+    return 0;
 }
 
 Matrix LinearSolver::get_lower()
 {
-    auto [row, col] = lu.size();
+    auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
     assert( row==col );
 
     Matrix res = Eye(row);
     for( int i=1; i<row; i++ )
         for( int j=0; j<i; j++ )
-            res(i,j) = lu(i,j);
+            res(i,j) = _mat(i,j);
     return res;
 }
 
 Matrix LinearSolver::get_upper()
 {
-    auto [row, col] = lu.size();
+    auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
     assert( row==col );
 
     Matrix res = Eye(row);
     for( int i=0; i<row; i++ )
         for( int j=i; j<col; j++ )
-            res(i,j) = lu(i,j);
+            res(i,j) = _mat(i,j);
     return res;
 }
 
 Matrix LinearSolver::solve_lower_triangular( const Matrix& mat, const Matrix& b_vec )
 {
-    auto [row, col] = lu.size();
+    auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
     assert( row==col );
     assert( row==b_vec.n_row() );
@@ -60,7 +72,7 @@ Matrix LinearSolver::solve_lower_triangular( const Matrix& mat, const Matrix& b_
 
 Matrix LinearSolver::solve_upper_triangular( const Matrix& mat, const Matrix& b_vec )
 {
-    auto [row, col] = lu.size();
+    auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
     assert( row==col );
     assert( row==b_vec.n_row() );

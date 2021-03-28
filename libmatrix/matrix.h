@@ -6,13 +6,13 @@
 #include <iomanip>
 #include <cassert>
 #include <functional>
+#include <algorithm>
 
 #include "matrix_init.h"
 #include "rand.h"
 
 namespace mx
 {
-
 
 class Matrix
 {
@@ -42,6 +42,9 @@ public:
     int n_row() const { return _n_row; }
     int n_col() const { return _n_col; }
     Matrix transpose() const;
+    double norm( int p=2 );
+    double norm_1();
+    double norm_inf();
 private:
     template<typename F>
     void init_mat_random( int n, F&& rand );
