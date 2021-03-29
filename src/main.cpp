@@ -1,7 +1,7 @@
 
 #include "matrix.h"
 #include "lu.h"
-#include "Eigen/Dense"
+#include "third_party/Eigen/Dense"
 
 Eigen::MatrixXd mx_to_eigen( mx::Matrix mat )
 {
