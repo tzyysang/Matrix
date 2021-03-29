@@ -51,7 +51,7 @@ Matrix LinearSolver::get_upper()
     return res;
 }
 
-Matrix LinearSolver::solve_lower_triangular( const Matrix& mat, const Matrix& b_vec )
+Matrix LinearSolver::solve_lower_triangular( const Matrix& b_vec )
 {
     auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
@@ -64,14 +64,13 @@ Matrix LinearSolver::solve_lower_triangular( const Matrix& mat, const Matrix& b_
         x(i,0) += b_vec(i,0);
         for( int j=0; j<i; j++ )
         {
-            x(i,0) -= mat(i,j) * x(j,0);
+            x(i,0) -= _mat(i,j) * x(j,0);
         }
-        x(i,0) /= mat(i,i);
     }
     return x;
 }
 
-Matrix LinearSolver::solve_upper_triangular( const Matrix& mat, const Matrix& b_vec )
+Matrix LinearSolver::solve_upper_triangular( const Matrix& b_vec )
 {
     auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
@@ -84,9 +83,9 @@ Matrix LinearSolver::solve_upper_triangular( const Matrix& mat, const Matrix& b_
         x(i,0) += b_vec(i,0);
         for( int j=col-1; j>i; j-- )
         {
-            x(i,0) -= mat(i,j) * x(j,0);
+            x(i,0) -= _mat(i,j) * x(j,0);
         }
-        x(i,0) /= mat(i,i);
+        x(i,0) /= _mat(i,i);
     }
     return x;
 }
@@ -94,7 +93,7 @@ Matrix LinearSolver::solve_upper_triangular( const Matrix& mat, const Matrix& b_
 Matrix LinearSolver::solve_vec( const Matrix& b )
 {
     assert( b.n_row()==_mat.n_row() );
-    return solve_upper_triangular( get_upper(), solve_lower_triangular( get_lower(), b ) );
+    return solve_upper_triangular( solve_lower_triangular( b ) );
 }
 
 }

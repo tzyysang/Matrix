@@ -36,7 +36,7 @@ int main( int argc, char* argv[] )
 
     std::cout << "RandSPD matrix = \n" << mat6 << std::endl;
 
-    int n = 20;
+    int n = 10;
     mx::Matrix mat3 = mx::Rand(n);
     mx::Matrix mat7 = mx::RandSPD(n);
     mx::LinearSolver ls( mat7 );
