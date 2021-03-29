@@ -28,6 +28,7 @@ public:
     Matrix get_lower();
     Matrix get_upper();
     LinearSolverStatus get_status() { return status; }
+    Matrix solve_vec( const Matrix& b );
 };
 
 }

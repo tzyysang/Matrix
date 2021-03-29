@@ -222,4 +222,18 @@ double Matrix::norm_inf()
     return std::abs( *(std::max_element( _mat.begin(), _mat.end(), [](double x, double y){ return std::abs(x)<std::abs(y); } )) );
 }
 
+Matrix Matrix::submatrix( int r_beg, int r_end, int c_beg, int c_end )
+{
+    if( r_end==-1 ) r_end = _n_row-1;
+    if( c_end==-1 ) c_end = _n_col-1;
+    assert( r_beg>=0 && r_beg<=r_end );
+    assert( c_beg>=0 && c_beg<=c_end );
+    int row = r_end-r_beg+1, col = c_end-c_beg+1;
+    Matrix sub( row, col );
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<col; j++ )
+            sub(i,j) = (*this)( r_beg+i, c_beg+j );
+    return sub;
+}
+
 }

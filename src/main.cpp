@@ -29,10 +29,6 @@ int main( int argc, char* argv[] )
     std::cout << "norm2 = " << mat2.norm() << std::endl;
     std::cout << "norm-1 = " << mat2.norm(-1) << std::endl;
 
-    mx::Matrix mat3( mx::Rand(7) );
-    std::cout << "Rand matrix = \n" << mat3 << std::endl;
-
-
     mx::Matrix mat6 = mx::RandSPD(10);
     Eigen::MatrixXd emat = mx_to_eigen( mat6 );
     Eigen::EigenSolver<Eigen::MatrixXd> eig_solver( emat );
@@ -40,13 +36,20 @@ int main( int argc, char* argv[] )
 
     std::cout << "RandSPD matrix = \n" << mat6 << std::endl;
 
-    mx::Matrix mat7 = mx::RandSPD(10);
+    int n = 20;
+    mx::Matrix mat3 = mx::Rand(n);
+    mx::Matrix mat7 = mx::RandSPD(n);
     mx::LinearSolver ls( mat7 );
     ls.lu_decomp();
-    mx::Matrix low = ls.get_lower();
-    mx::Matrix up = ls.get_upper();
+    std::cout << "|mat - LU| = " << (mat7 - ls.get_lower()*ls.get_upper()).norm() << std::endl;
 
-    std::cout << "|mat - LU| = " << (mat7 - low*up).norm() << std::endl;
-
+    double abs_err = 0.0;
+    for( int i=0; i<n; i++ )
+    {
+        mx::Matrix vec = mat3.submatrix( 0,-1, i, i );
+        mx::Matrix sol = ls.solve_vec( vec );
+        abs_err += ( mat7*sol - vec ).norm();
+    }
+    std::cout << "MAE = " << abs_err/n << std::endl;
     return 0;
 }

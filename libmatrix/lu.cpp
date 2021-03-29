@@ -21,6 +21,7 @@ int LinearSolver::lu_decomp()
                 _mat(i,j) = _mat(i,j) - _mat(i,k)*_mat(k,j);
     }
 
+    status = LU_SUCCESS;
     return 0;
 }
 
@@ -43,7 +44,7 @@ Matrix LinearSolver::get_upper()
     assert( row>0 && col>0 );
     assert( row==col );
 
-    Matrix res = Eye(row);
+    Matrix res = Zeros(row);
     for( int i=0; i<row; i++ )
         for( int j=i; j<col; j++ )
             res(i,j) = _mat(i,j);
@@ -81,13 +82,19 @@ Matrix LinearSolver::solve_upper_triangular( const Matrix& mat, const Matrix& b_
     for( int i=row-1; i>=0; i-- )
     {
         x(i,0) += b_vec(i,0);
-        for( int j=i+1; j<col; j++ )
+        for( int j=col-1; j>i; j-- )
         {
             x(i,0) -= mat(i,j) * x(j,0);
         }
         x(i,0) /= mat(i,i);
     }
     return x;
+}
+
+Matrix LinearSolver::solve_vec( const Matrix& b )
+{
+    assert( b.n_row()==_mat.n_row() );
+    return solve_upper_triangular( get_upper(), solve_lower_triangular( get_lower(), b ) );
 }
 
 }

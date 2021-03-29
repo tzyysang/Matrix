@@ -1,3 +1,5 @@
+#ifndef _MX_INIT_H
+#define _MX_INIT_H
 
 namespace mx
 {
@@ -42,3 +44,4 @@ struct RandSPD : public MatrixInitilizer
 };
 
 }
+#endif

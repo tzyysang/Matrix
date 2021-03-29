@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "matrix_init.h"
+#include "matrix_range.h"
 #include "rand.h"
 
 namespace mx
@@ -45,6 +46,7 @@ public:
     double norm( int p=2 );
     double norm_1();
     double norm_inf();
+    Matrix submatrix( int r_beg, int r_end, int c_beg, int c_end );
 private:
     template<typename F>
     void init_mat_random( int n, F&& rand );
