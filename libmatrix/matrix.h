@@ -7,6 +7,7 @@
 #include <cassert>
 #include <functional>
 #include <algorithm>
+#include <fstream>
 
 #include "matrix_init.h"
 #include "matrix_range.h"
@@ -31,6 +32,7 @@ public:
     Matrix( std::initializer_list<double> list );
     Matrix( std::initializer_list< std::initializer_list<double> > lists );
     Matrix( std::vector< std::vector<double> > vecs );
+    Matrix( const char* file_name );
     double& operator()( int row, int col );
     double& operator()( int idx );
     double operator()( int row, int col ) const;
@@ -47,6 +49,8 @@ public:
     double norm_1();
     double norm_inf();
     Matrix submatrix( int r_beg, int r_end, int c_beg, int c_end );
+    void read_from_file( const char* file_name );
+    void write_to_file( const char* file_name, int precision=16 );
 private:
     template<typename F>
     void init_mat_random( int n, F&& rand );

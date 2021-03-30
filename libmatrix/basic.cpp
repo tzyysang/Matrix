@@ -98,6 +98,58 @@ Matrix::Matrix( std::vector< std::vector<double> > vecs )
     }
 }
 
+Matrix::Matrix( const char* file_name )
+{
+    read_from_file( file_name );
+}
+
+void Matrix::read_from_file( const char* file_name )
+{
+    std::ifstream ifs( file_name );
+    if( !ifs.is_open() )
+    {
+        std::cerr << "Cannot open file: " << file_name << std::endl;
+        assert( false && "Failed to open file" );
+    }
+
+    int row, col;
+    std::string type;
+    ifs >> row >> col >> type;
+    assert( row>0 && col>0 );
+    if( type!="DENSE" ) std::cerr << "Error: only DENSE matrix is supported now!" << std::endl;
+    assert( type=="DENSE" );
+
+    resize( row, col );
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<col; j++ )
+            ifs >> (*this)(i,j);
+    ifs.close();
+}
+void Matrix::write_to_file( const char* file_name, int precision )
+{
+    assert( _n_row>0 && _n_col>0 );
+    assert( precision>0 );
+
+    std::ofstream ofs( file_name );
+    if( !ofs.is_open() )
+    {
+        std::cerr << "Cannot open file: " << file_name << std::endl;
+        assert( false && "Failed to open file" );
+    }
+
+    ofs << _n_row << " " << _n_col << " DENSE" << std::endl;
+
+    for( int i=0; i<_n_row; i++ )
+    {
+        for( int j=0; j<_n_col; j++ )
+        {
+            ofs << std::setprecision(precision) << (*this)(i,j) << " ";
+        }
+        ofs << std::endl;
+    }
+    ofs.close();
+}
+
 double& Matrix::operator()( int row, int col )
 {
     return _mat[ index(row,col) ];

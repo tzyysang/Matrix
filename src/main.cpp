@@ -21,6 +21,7 @@ int main( int argc, char* argv[] )
     mx::Matrix mat2 = { {1, 4, 7},
                         {2, 5, 8},
                         {3, 6, -10} };
+
     std::cout << "mat1 = \n" << mat1 << std::endl;
     std::cout << "mat2 = \n" << mat2 << std::endl;
     std::cout << "2*mat2 - mat1/0.5 = \n" << 2*mat2 - mat1/0.5 << std::endl;
@@ -51,5 +52,17 @@ int main( int argc, char* argv[] )
         abs_err += ( mat7*sol - vec ).norm();
     }
     std::cout << "MAE = " << abs_err/n << std::endl;
+
+    mx::Matrix mat = { { 1, 0,-1, 2},
+                       { 0, 4, 2, 2},
+                       {-1, 2, 6, 1},
+                       { 2, 2, 1, 7} };
+
+    char filename[] = "test.txt";
+    mat7.write_to_file( filename, 17 );
+    mx::Matrix mat_read( filename );
+    std::cout << "mat_read - mat7 = " << (mat_read-mat7).norm() << std::endl;
+
+
     return 0;
 }
