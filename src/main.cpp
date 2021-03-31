@@ -5,6 +5,11 @@
 
 #include <cstring>
 
+static bool apprx_equal( double x, double y, double err=1e-6 )
+{
+    return ( std::abs(x-y)/std::abs(x) < err );
+}
+
 static Eigen::MatrixXd mx_to_eigen( mx::Matrix mat )
 {
     auto [row, col] = mat.size();
@@ -15,10 +20,10 @@ static Eigen::MatrixXd mx_to_eigen( mx::Matrix mat )
     return eig_mat;
 }
 
-static int LU_error_bench()
+static int bench_LU_error()
 {
     /// test LU error |PA-LU| in random matrices
-    std::cout << "[LU_error_benchmark]" << std::endl;
+    std::cout << "[LU_error benchmark]" << std::endl;
 
     int size = 200;
     int runs = 10;
@@ -39,13 +44,47 @@ static int LU_error_bench()
     return 0;
 }
 
+
+static int bench_LU_solve_partial()
+{
+    /// test LU by solving Ax = b problems
+    std::cout << "[LU_solve_partial benchmark]" << std::endl;
+
+    int size = 10;
+    mx::Matrix mat = mx::RandSPD(size);
+    mx::Matrix b_vecs = mx::Rand(size);
+    mx::LinearSolver ls(mat);
+    ls.lu_decomp();
+    Eigen::MatrixXd eig_mat = mx_to_eigen(mat);
+
+    double mae = 0.0;
+    for( int i=0; i<1; i++ )
+    {
+        mx::Matrix b = b_vecs.submatrix(0,-1,i,i);
+        mx::Matrix x = ls.solve_vec( b );
+
+        Eigen::VectorXd bb = mx_to_eigen( b );
+        Eigen::VectorXd eig_x = eig_mat.partialPivLu().solve(bb);
+
+        for( int k=0; k<size; k++ )
+        {
+            mae += std::abs( x(k) - eig_x(k) );
+            if( !apprx_equal( x(k), eig_x(k) ) ) return -1;
+        }
+    }
+    std::cout << "root MAE = " << mae/size << std::endl;
+    return 0;
+}
+
 static int run_benchmarks( int argc, char* argv[] )
 {
     int status = 0;
     for( int i=1; i<argc; i++ )
     {
         if( std::strcmp( argv[i], "-bench_LU_error" ) == 0 )
-            status = status || LU_error_bench();
+            status = status || bench_LU_error();
+        if( std::strcmp( argv[i], "-bench_LU_solve_partial" ) == 0 )
+            status = status || bench_LU_solve_partial();
     }
 
     return status;
@@ -79,7 +118,7 @@ int main( int argc, char* argv[] )
 
     std::cout << "RandSPD matrix = \n" << mat6 << std::endl;
 
-    int n = 500;
+    int n = 100;
     mx::Matrix mat3 = mx::Rand(n);
     mx::Matrix mat7 = mx::RandSPD(n);
     mx::LinearSolver ls( mat7 );

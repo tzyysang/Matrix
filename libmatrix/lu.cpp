@@ -156,8 +156,7 @@ Matrix LinearSolver::permute()
 Matrix LinearSolver::solve_vec( const Matrix& b )
 {
     assert( b.n_row()==_mat.n_row() );
-    Matrix pb = permute_vec( b );
-    return solve_upper_triangular( solve_lower_triangular( pb ) );
+    return solve_upper_triangular( solve_lower_triangular( permute_vec( b ) ) );
 }
 
 }

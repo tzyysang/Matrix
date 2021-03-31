@@ -49,3 +49,4 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 # Tests
 enable_testing()
 add_test(LU_error ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_LU_error")
+add_test(LU_solve_partial ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_LU_solve_partial")
