@@ -247,6 +247,7 @@ void Matrix::init_mat_rand_spd( int n, F&& rand )
 
 double Matrix::norm( int p )
 {
+    /// lp-norm, p<=0 for infinite form (max of abs of entries)
     if( p<=0 ) return norm_inf();
     if( p==1 ) return norm_1();
 
@@ -262,6 +263,7 @@ double Matrix::norm( int p )
 
 double Matrix::norm_1()
 {
+    /// l1-norm is the sum of abs of all entries
     double res = 0.0;
     for( int i=0; i<_n_row; i++ )
         for( int j=0; j<_n_col; j++ )
@@ -271,11 +273,13 @@ double Matrix::norm_1()
 
 double Matrix::norm_inf()
 {
+    /// return max of abs of entries
     return std::abs( *(std::max_element( _mat.begin(), _mat.end(), [](double x, double y){ return std::abs(x)<std::abs(y); } )) );
 }
 
 Matrix Matrix::submatrix( int r_beg, int r_end, int c_beg, int c_end )
 {
+    /// return submatrix as new Matrix
     if( r_end==-1 ) r_end = _n_row-1;
     if( c_end==-1 ) c_end = _n_col-1;
     assert( r_beg>=0 && r_beg<=r_end );
@@ -286,6 +290,18 @@ Matrix Matrix::submatrix( int r_beg, int r_end, int c_beg, int c_end )
         for( int j=0; j<col; j++ )
             sub(i,j) = (*this)( r_beg+i, c_beg+j );
     return sub;
+}
+
+void Matrix::swap_row( int i, int j )
+{
+    /// swap two rows
+    assert( i>=0 && i<_n_row );
+    assert( j>=0 && j<_n_row );
+    if( i==j ) return;
+    for( int k=0; k<_n_col; k++ )
+    {
+        std::swap( (*this)(i,k), (*this)(j,k) );
+    }
 }
 
 }

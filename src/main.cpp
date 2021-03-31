@@ -42,7 +42,7 @@ int main( int argc, char* argv[] )
     mx::Matrix mat7 = mx::RandSPD(n);
     mx::LinearSolver ls( mat7 );
     ls.lu_decomp();
-    std::cout << "|mat - LU| = " << (mat7 - ls.get_lower()*ls.get_upper()).norm() << std::endl;
+    std::cout << "|mat - LU| = " << ( ls.permute()*mat7 - ls.get_lower()*ls.get_upper()).norm() << std::endl;
 
     double abs_err = 0.0;
     for( int i=0; i<n; i++ )
