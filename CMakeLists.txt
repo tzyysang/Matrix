@@ -45,3 +45,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   target_link_libraries(matrix_bench libmatrix stdc++fs )
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+# Tests
+enable_testing()
+add_test(LU_error ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_LU_error")

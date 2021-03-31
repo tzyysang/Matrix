@@ -3,7 +3,9 @@
 #include "lu.h"
 #include "third_party/Eigen/Dense"
 
-Eigen::MatrixXd mx_to_eigen( mx::Matrix mat )
+#include <cstring>
+
+static Eigen::MatrixXd mx_to_eigen( mx::Matrix mat )
 {
     auto [row, col] = mat.size();
     Eigen::MatrixXd eig_mat( row, col );
@@ -13,9 +15,49 @@ Eigen::MatrixXd mx_to_eigen( mx::Matrix mat )
     return eig_mat;
 }
 
+static int LU_error_bench()
+{
+    /// test LU error |PA-LU| in random matrices
+    std::cout << "[LU_error_benchmark]" << std::endl;
+
+    int size = 200;
+    int runs = 10;
+    mx::LinearSolver ls;
+    double error = 0.0;
+
+    for( int i=0; i<runs; i++ )
+    {
+        mx::Matrix mat = mx::RandSPD(size);
+        ls.set_matrix( mat );
+        ls.lu_decomp();
+        error += ( ls.permute()*mat - ls.get_lower()*ls.get_upper()).norm();
+    }
+    error /= (double)runs;
+    std::cout << error << std::endl;
+
+    if( error>1e-12 ) return -1;
+    return 0;
+}
+
+static int run_benchmarks( int argc, char* argv[] )
+{
+    int status = 0;
+    for( int i=1; i<argc; i++ )
+    {
+        if( std::strcmp( argv[i], "-bench_LU_error" ) == 0 )
+            status = status || LU_error_bench();
+    }
+
+    return status;
+}
+
 int main( int argc, char* argv[] )
 {
-    std::cout << "hello world" << std::endl;
+
+    if( argc>=2 )
+    {
+        return run_benchmarks( argc, argv );
+    }
 
     mx::Matrix mat1 = mx::Eye(3);
     mx::Matrix mat2 = { {1, 4, 7},
@@ -37,7 +79,7 @@ int main( int argc, char* argv[] )
 
     std::cout << "RandSPD matrix = \n" << mat6 << std::endl;
 
-    int n = 10;
+    int n = 500;
     mx::Matrix mat3 = mx::Rand(n);
     mx::Matrix mat7 = mx::RandSPD(n);
     mx::LinearSolver ls( mat7 );
