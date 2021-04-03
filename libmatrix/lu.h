@@ -13,26 +13,41 @@ enum LinearSolverStatus{
     CHOLE_SUCCESS
 };
 
+enum LinearSolverMode{
+    NONE,
+    PARTIAL_LU,
+    COMPLETE_LU
+};
+
 class LinearSolver
 {
     Matrix _mat;
     LinearSolverStatus status;
+    LinearSolverMode mode;
     Matrix solve_lower_triangular( const Matrix& b_vec );
     Matrix solve_upper_triangular( const Matrix& b_vec );
     std::vector<int> perm;
+    std::vector<int> q_perm;
+    double abs_threshold;
 
 public:
-    LinearSolver() { status = EMPTY; }
-    LinearSolver( const Matrix& mat ) { set_matrix(mat); }
+    LinearSolver();
+    LinearSolver( const Matrix& mat );
     void set_matrix( const Matrix& mat );
     int lu_decomp();
+    int lu_decomp_partial();
     Matrix get_lower();
     Matrix get_upper();
     LinearSolverStatus get_status() { return status; }
     Matrix solve_vec( const Matrix& b );
-    int find_max( int i );
+    int find_max( int j );
+    std::tuple<int,int> find_max_complete( int idx );
     Matrix permute_vec( const Matrix& b );
+    Matrix permute_vec_q( const Matrix& b );
     Matrix permute();
+    Matrix permute( const Matrix& mat );
+    int rank();
+    Matrix matrix_lu() { return _mat; }
 };
 
 }

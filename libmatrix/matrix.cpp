@@ -9,7 +9,7 @@ void Matrix::print( std::ostream& os ) const
     {
         for( int j=0; j<_n_col; j++ )
         {
-            os << std::setprecision(6) << std::setw(10) << _mat[ index(i,j) ];
+            os << std::setprecision(6) << std::setw(12) << _mat[ index(i,j) ];
         }
         os << std::endl;
     }
@@ -280,8 +280,10 @@ double Matrix::norm_inf()
 Matrix Matrix::submatrix( int r_beg, int r_end, int c_beg, int c_end )
 {
     /// return submatrix as new Matrix
-    if( r_end==-1 ) r_end = _n_row-1;
-    if( c_end==-1 ) c_end = _n_col-1;
+    if( r_beg<0 ) r_beg = _n_row + r_beg;
+    if( r_end<0 ) r_end = _n_row + r_end;
+    if( c_beg<0 ) c_beg = _n_col + c_beg;
+    if( c_end<0 ) c_end = _n_col + c_end;
     assert( r_beg>=0 && r_beg<=r_end );
     assert( c_beg>=0 && c_beg<=c_end );
     int row = r_end-r_beg+1, col = c_end-c_beg+1;
@@ -301,6 +303,18 @@ void Matrix::swap_row( int i, int j )
     for( int k=0; k<_n_col; k++ )
     {
         std::swap( (*this)(i,k), (*this)(j,k) );
+    }
+}
+
+void Matrix::swap_col( int i, int j )
+{
+    /// swap two columns
+    assert( i>=0 && i<_n_col );
+    assert( j>=0 && j<_n_col );
+    if( i==j ) return;
+    for( int k=0; k<_n_row; k++ )
+    {
+        std::swap( (*this)(k,i), (*this)(k,j) );
     }
 }
 

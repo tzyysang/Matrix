@@ -3,6 +3,21 @@
 namespace mx
 {
 
+LinearSolver::LinearSolver()
+:   status(EMPTY),
+    mode(NONE),
+    abs_threshold(1e-16)
+{
+}
+
+LinearSolver::LinearSolver( const Matrix& mat )
+:   status(EMPTY),
+    mode(NONE),
+    abs_threshold(1e-16)
+{
+    set_matrix(mat);
+}
+
 void LinearSolver::set_matrix( const Matrix& mat )
 {
     auto [row, col] = mat.size();
@@ -14,6 +29,11 @@ void LinearSolver::set_matrix( const Matrix& mat )
     perm.resize( row );
     for( int i=0; i<row; i++ )
         perm[i] = i;
+
+    q_perm.resize( col );
+    for( int i=0; i<col; i++ )
+        q_perm[i] = i;
+
     status = MAT_SET;
 }
 
@@ -34,8 +54,32 @@ int LinearSolver::find_max( int j )
     return max_idx;
 }
 
-int LinearSolver::lu_decomp()
+std::tuple<int,int> LinearSolver::find_max_complete( int idx )
 {
+    /// find the max_abs entris in mat[ idx:end, idx:end ]
+    int max_i = idx;
+    int max_j = idx;
+    double max_val = std::abs( _mat(idx,idx) );
+    int n = _mat.n_row();
+    for( int i=idx; i<n; i++ )
+    {
+        for( int j=idx; j<n; j++ )
+        {
+            double val = std::abs( _mat(i,j) );
+            if( val > max_val )
+            {
+                max_val = val;
+                max_i = i;
+                max_j = j;
+            }
+        }
+    }
+    return std::make_tuple( max_i, max_j );
+}
+
+int LinearSolver::lu_decomp_partial()
+{
+    /// LU decompostition with partial pivoting
     auto [row, col] = _mat.size();
     assert( row>0 && col>0 );
     assert( row==col );
@@ -57,6 +101,37 @@ int LinearSolver::lu_decomp()
     }
 
     status = LU_SUCCESS;
+    mode = PARTIAL_LU;
+    return 0;
+}
+
+int LinearSolver::lu_decomp()
+{
+    /// LU decomposition with complete pivoting
+    auto [row, col] = _mat.size();
+    assert( row>0 && col>0 );
+    assert( row==col );
+
+    for( int k=0; k<row-1; k++ )
+    {
+        auto [ m, n ] = find_max_complete( k );
+        _mat.swap_row( k, m );
+        _mat.swap_col( k, n );
+        perm[k] = m;
+        q_perm[k] = n;
+
+        double pivot = _mat(k,k);
+        if( pivot==0.0 ) return -1;
+        for( int i=k+1; i<row; i++ )
+            _mat(i,k) = _mat(i,k) / pivot;
+
+        for( int i=k+1; i<row; i++ )
+            for( int j=k+1; j<col; j++ )
+                _mat(i,j) = _mat(i,j) - _mat(i,k)*_mat(k,j);
+    }
+
+    status = LU_SUCCESS;
+    mode = COMPLETE_LU;
     return 0;
 }
 
@@ -94,7 +169,8 @@ Matrix LinearSolver::solve_lower_triangular( const Matrix& b_vec )
     assert( row==b_vec.n_row() );
 
     Matrix x( row, 1 );
-    for( int i=0; i<row; i++ )
+    int r = rank();
+    for( int i=0; i<r; i++ )
     {
         x(i,0) += b_vec(i,0);
         for( int j=0; j<i; j++ )
@@ -127,10 +203,22 @@ Matrix LinearSolver::solve_upper_triangular( const Matrix& b_vec )
 
 Matrix LinearSolver::permute_vec( const Matrix& b )
 {
+    /// swap for (Pb)
     Matrix pb = b;
     for( int i=0; i<pb.n_row()-1; i++ )
     {
         std::swap( pb(i), pb( perm[i] ) );
+    }
+    return pb;
+}
+
+Matrix LinearSolver::permute_vec_q( const Matrix& b )
+{
+    /// swap for (Qb), Q is the column permutation matrix
+    Matrix pb = b;
+    for( int i=pb.n_row()-1; i>=0; i-- )
+    {
+        std::swap( pb(i), pb( q_perm[i] ) );
     }
     return pb;
 }
@@ -153,10 +241,39 @@ Matrix LinearSolver::permute()
     return p_mat;
 }
 
+Matrix LinearSolver::permute( const Matrix& mat )
+{
+    /// return the permutation matrix
+    assert( status == LU_SUCCESS );
+    int n = perm.size();
+
+    Matrix p_mat = mat;
+    for( int i=0; i<n; i++ )
+        p_mat.swap_row(i,perm[i]);
+    for( int i=0; i<n; i++ )
+        p_mat.swap_col(i,q_perm[i]);
+
+    return p_mat;
+}
+
+int LinearSolver::rank()
+{
+    int size = _mat.n_row();
+    if( mode!=COMPLETE_LU ) return size;
+
+    double threshold = _mat(0,0) * abs_threshold * size;
+    for( int i=0; i<size; i++ )
+        if( std::abs(_mat(i,i)) < threshold ) return i;
+    return size;
+}
+
+
 Matrix LinearSolver::solve_vec( const Matrix& b )
 {
     assert( b.n_row()==_mat.n_row() );
-    return solve_upper_triangular( solve_lower_triangular( permute_vec( b ) ) );
+    return permute_vec_q( solve_upper_triangular( solve_lower_triangular( permute_vec( b ) ) ) );
+    //return solve_upper_triangular( solve_lower_triangular( permute_vec( b ) ) );
+
 }
 
 }

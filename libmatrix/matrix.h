@@ -52,6 +52,7 @@ public:
     void read_from_file( const char* file_name );
     void write_to_file( const char* file_name, int precision=16 );
     void swap_row( int i, int j );
+    void swap_col( int i, int j );
 private:
     template<typename F>
     void init_mat_random( int n, F&& rand );
