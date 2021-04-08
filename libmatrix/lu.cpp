@@ -135,6 +135,42 @@ int LinearSolver::lu_decomp()
     return 0;
 }
 
+int LinearSolver::chole_decomp()
+{
+    /// Cholesky decomposition
+    auto [row, col] = _mat.size();
+    assert( row>0 && col>0 );
+    assert( row==col );
+
+    for( int i=0; i<row; i++ )
+    {
+        assert( _mat(i,i)>0.0 );
+        if( _mat(i,i)<=0.0 ) return -1;
+        for( int j=0; j<i+1; j++ )
+        {
+            double sum = 0.0;
+            for( int k=0; k<j; k++ )
+                sum += _mat(i,k) * _mat(j,k);
+
+            //assert( _mat(i,i) - sum > 0.0 );
+            if( _mat(i,i) - sum < 0.0 )
+            {
+                std::cout << _mat(i,i) << ", " << sum << std::endl;
+            }
+
+            if( i==j )
+                _mat(i,j) = sqrt( _mat(i,i) - sum );
+            else
+                _mat(i,j) = 1.0 / _mat(j,j) * ( _mat(i,j) - sum );
+        }
+    }
+
+    status = CHOLE_SUCCESS;
+    mode = CHOLE;
+    return 0;
+}
+
+
 Matrix LinearSolver::get_lower()
 {
     auto [row, col] = _mat.size();
@@ -157,6 +193,17 @@ Matrix LinearSolver::get_upper()
     Matrix res = Zeros(row);
     for( int i=0; i<row; i++ )
         for( int j=i; j<col; j++ )
+            res(i,j) = _mat(i,j);
+    return res;
+}
+
+Matrix LinearSolver::get_chole()
+{
+    assert( status == CHOLE_SUCCESS );
+    int row = _mat.n_row();
+    Matrix res = Zeros(row);
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<=i; j++ )
             res(i,j) = _mat(i,j);
     return res;
 }

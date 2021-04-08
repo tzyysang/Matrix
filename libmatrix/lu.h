@@ -16,7 +16,8 @@ enum LinearSolverStatus{
 enum LinearSolverMode{
     NONE,
     PARTIAL_LU,
-    COMPLETE_LU
+    COMPLETE_LU,
+    CHOLE
 };
 
 class LinearSolver
@@ -36,8 +37,10 @@ public:
     void set_matrix( const Matrix& mat );
     int lu_decomp();
     int lu_decomp_partial();
+    int chole_decomp();
     Matrix get_lower();
     Matrix get_upper();
+    Matrix get_chole();
     LinearSolverStatus get_status() { return status; }
     Matrix solve_vec( const Matrix& b );
     int find_max( int j );

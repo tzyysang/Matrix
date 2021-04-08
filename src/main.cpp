@@ -82,11 +82,6 @@ static int bench_LU_complete()
 {
     /// test complete LU by comparing the solve LU matrix
     std::cout << "[LU_complete benchmark]" << std::endl;
-
-    //int size = 300;
-    //mx::Matrix mat = mx::Rand(size);
-    //int size = 17;
-    //mx::Matrix mat("mats/m17.txt");
     int size = 300;
     mx::Matrix mat = mx::RandSPD(size);
 
@@ -161,6 +156,38 @@ static int bench_LU_solve_complete()
     return 0;
 }
 
+static int bench_Chole_decomp()
+{
+    /// test cholesky decomposition by |mat - LL|
+    int size = 10;
+    mx::Matrix mat = mx::RandSPD( size );
+    mx::LinearSolver ls( mat );
+    int status = ls.chole_decomp();
+    auto L = ls.get_chole();
+    auto LL = L * L.transpose();
+
+    Eigen::MatrixXd eig_mat = mx_to_eigen( mat );
+    Eigen::LLT<Eigen::MatrixXd> eig_ll( eig_mat );
+    Eigen::MatrixXd eig_L = eig_ll.matrixL();
+
+    Eigen::EigenSolver<Eigen::MatrixXd> es( eig_mat );
+    auto V = es.eigenvalues();
+    std::cout << "V =\n" << V.real() << std::endl;
+
+    double error = 0.0;
+    for( int i=0; i<size; i++ )
+    {
+        for( int j=0; j<=i; j++ )
+        {
+            error += std::abs( eig_L(i,j) - L(i,j) );
+            if( !apprx_equal( eig_L(i,j), L(i,j) ) )
+                return -1;
+        }
+    }
+    std::cout << "error = " << error << std::endl;
+    return 0;
+}
+
 static int run_benchmarks( int argc, char* argv[] )
 {
     int status = 0;
@@ -174,6 +201,8 @@ static int run_benchmarks( int argc, char* argv[] )
             status = status || bench_LU_complete();
         else if( std::strcmp( argv[i], "-bench_LU_solve_complete" ) == 0 )
             status = status || bench_LU_solve_complete();
+        else if( std::strcmp( argv[i], "-bench_Chole_decomp" ) == 0 )
+            status = status || bench_Chole_decomp();
         else
         {
             std::cerr << "invalid command: " << argv[i] << std::endl;
