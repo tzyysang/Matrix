@@ -232,6 +232,7 @@ void Matrix::init_mat_rand_spd( int n, F&& rand )
         for( int j=0; j<i; j++ )
             for( int k=0; k<=j; k++ )
                 (*this)(j,i) += (*this)(j,k) * (*this)(i,k);
+
     for( int i=0; i<n; i++ )
     {
         double sum = 0.0;
@@ -243,6 +244,10 @@ void Matrix::init_mat_rand_spd( int n, F&& rand )
     for( int i=0; i<n; i++ )
         for( int j=0; j<i; j++ )
             (*this)(i,j) = (*this)(j,i);
+
+    /// avoid round-off error to ensure SPD
+    for( int i=0; i<n; i++ )
+        (*this)(i,i) += 1e-12;
 }
 
 double Matrix::norm( int p )

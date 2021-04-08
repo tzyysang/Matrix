@@ -135,6 +135,64 @@ int LinearSolver::lu_decomp()
     return 0;
 }
 
+int LinearSolver::find_max_pivot( int j )
+{
+    /// find max diagonal element in _mat[ j:end, j:end ]
+    int n = _mat.n_row();
+    int max_idx = j;
+    double max_val = _mat(j,j);
+    for( j=j+1; j<n; j++ )
+    {
+        if( _mat(j,j)>max_val )
+        {
+            max_val = _mat(j,j);
+            max_idx = j;
+        }
+    }
+    return max_idx;
+}
+
+int LinearSolver::chole_decomp_pivoting()
+{
+    /// Cholesky decomposition with pivoting
+    auto [row, col] = _mat.size();
+    assert( row>0 && col>0 );
+    assert( row==col );
+
+    Matrix res = Zeros( row );
+
+    for( int k=0; k<row; k++ )
+    {
+        int q = find_max_pivot( k );
+
+        q = k;
+        if( _mat(q,q)<=0.0 ) return -1;
+
+        res.swap_col(k, q);
+        _mat.swap_col(k, q);
+        _mat.swap_row(k, q);
+        perm[k] = q;
+
+        res(k,k) = std::sqrt( _mat(k,k) );
+        double r = 1.0/res(k,k);
+        for( int j=k+1; j<col; j++ )
+        {
+            res(k,j) = r*_mat(k,j);
+        }
+        for( int i=k+1; i<row; i++ )
+            for( int j=k+1; j<col; j++ )
+                _mat(i,j) = _mat(i,j) - res(k,i)*res(k,j);
+
+    }
+
+    for( int i=0; i<row; i++ )
+        for( int j=0; j<=i; j++)
+            _mat(i,j) = res(j,i);
+
+    status = CHOLE_SUCCESS;
+    return 0;
+}
+
 int LinearSolver::chole_decomp()
 {
     /// Cholesky decomposition
@@ -144,15 +202,14 @@ int LinearSolver::chole_decomp()
 
     for( int i=0; i<row; i++ )
     {
-        assert( _mat(i,i)>0.0 );
         if( _mat(i,i)<=0.0 ) return -1;
+
         for( int j=0; j<i+1; j++ )
         {
             double sum = 0.0;
             for( int k=0; k<j; k++ )
                 sum += _mat(i,k) * _mat(j,k);
 
-            //assert( _mat(i,i) - sum > 0.0 );
             if( _mat(i,i) - sum < 0.0 )
             {
                 std::cout << _mat(i,i) << ", " << sum << std::endl;
@@ -290,7 +347,7 @@ Matrix LinearSolver::permute()
 
 Matrix LinearSolver::permute( const Matrix& mat )
 {
-    /// return the permutation matrix
+    /// return P * A * Q
     assert( status == LU_SUCCESS );
     int n = perm.size();
 
@@ -299,6 +356,21 @@ Matrix LinearSolver::permute( const Matrix& mat )
         p_mat.swap_row(i,perm[i]);
     for( int i=0; i<n; i++ )
         p_mat.swap_col(i,q_perm[i]);
+
+    return p_mat;
+}
+
+Matrix LinearSolver::permute_chole( const Matrix& mat )
+{
+    /// return the P^t * A * P
+    assert( status == CHOLE_SUCCESS );
+    int n = perm.size();
+
+    Matrix p_mat = mat;
+    for( int i=0; i<n; i++ )
+        p_mat.swap_row(i,perm[i]);
+    for( int i=0; i<n; i++ )
+        p_mat.swap_col(i,perm[i]);
 
     return p_mat;
 }
@@ -314,13 +386,22 @@ int LinearSolver::rank()
     return size;
 }
 
+Matrix LinearSolver::solve_vec_chole( const Matrix& b )
+{
+    assert( "TODO" );
+    return Matrix();
+}
 
 Matrix LinearSolver::solve_vec( const Matrix& b )
 {
     assert( b.n_row()==_mat.n_row() );
-    return permute_vec_q( solve_upper_triangular( solve_lower_triangular( permute_vec( b ) ) ) );
-    //return solve_upper_triangular( solve_lower_triangular( permute_vec( b ) ) );
+    if( status==LU_SUCCESS )
+        return permute_vec_q( solve_upper_triangular( solve_lower_triangular( permute_vec( b ) ) ) );
+    if( status==CHOLE_SUCCESS )
+        return solve_vec_chole( b );
 
+    assert( status==LU_SUCCESS || status==CHOLE_SUCCESS );
+    return Matrix();
 }
 
 }

@@ -158,8 +158,8 @@ static int bench_LU_solve_complete()
 
 static int bench_Chole_decomp()
 {
-    /// test cholesky decomposition by |mat - LL|
-    int size = 10;
+    /// test cholesky decomposition, no pivoting
+    int size = 16;
     mx::Matrix mat = mx::RandSPD( size );
     mx::LinearSolver ls( mat );
     int status = ls.chole_decomp();
@@ -171,8 +171,9 @@ static int bench_Chole_decomp()
     Eigen::MatrixXd eig_L = eig_ll.matrixL();
 
     Eigen::EigenSolver<Eigen::MatrixXd> es( eig_mat );
-    auto V = es.eigenvalues();
-    std::cout << "V =\n" << V.real() << std::endl;
+    auto V = es.eigenvalues().real();
+    for( int i=0; i<V.size(); i++ )
+        assert( V(i)>0.0 && "Matrix is not SPD!" );
 
     double error = 0.0;
     for( int i=0; i<size; i++ )
@@ -180,11 +181,61 @@ static int bench_Chole_decomp()
         for( int j=0; j<=i; j++ )
         {
             error += std::abs( eig_L(i,j) - L(i,j) );
+            if( std::isnan(L(i,j)) ) return -1;
             if( !apprx_equal( eig_L(i,j), L(i,j) ) )
                 return -1;
         }
     }
     std::cout << "error = " << error << std::endl;
+    return 0;
+}
+
+static int bench_Chole_decomp_pivot()
+{
+    /// test cholesky decomposition with pivoting
+    int size = 100;
+    mx::Matrix mat = mx::RandSPD( size );
+
+    Eigen::MatrixXd eig_mat = mx_to_eigen( mat );
+    Eigen::EigenSolver<Eigen::MatrixXd> es( eig_mat );
+    auto V = es.eigenvalues().real();
+    for( int i=0; i<V.size(); i++ )
+        assert( V(i)>0.0 && "Matrix is not SPD!" );
+
+    mx::LinearSolver ls( mat );
+    int status = ls.chole_decomp_pivoting();
+    auto L = ls.get_chole();
+    auto LL = L * L.transpose();
+    auto M = ls.permute_chole( mat );
+
+    mx::LinearSolver ls2( mat );
+    ls2.chole_decomp();
+    auto L2 = ls2.get_chole();
+    auto LL2 = L2 * L2.transpose();
+    double error2 = 0.0;
+
+    Eigen::LLT<Eigen::MatrixXd> eig_ll( eig_mat );
+    Eigen::MatrixXd eig_L = eig_ll.matrixL();
+    Eigen::MatrixXd eig_LL = eig_L * eig_L.transpose();
+    double error_eig = 0.0;
+
+    double error = 0.0;
+    for( int i=0; i<size; i++ )
+    {
+        for( int j=0; j<=i; j++ )
+        {
+            error += std::abs( M(i,j) - LL(i,j) );
+            if( std::isnan( LL(i,j) ) ) return -1;
+            if( !apprx_equal( M(i,j), LL(i,j) ) ) return -1;
+
+            error2 += std::abs( mat(i,j) - LL2(i,j) );
+            error_eig += std::abs( mat(i,j) - eig_LL(i,j) );
+        }
+    }
+    std::cout << "error = " << error << std::endl;
+    std::cout << "error2 = " << error2 << std::endl;
+    std::cout << "error_eig = " << error_eig << std::endl;
+
     return 0;
 }
 
@@ -203,6 +254,8 @@ static int run_benchmarks( int argc, char* argv[] )
             status = status || bench_LU_solve_complete();
         else if( std::strcmp( argv[i], "-bench_Chole_decomp" ) == 0 )
             status = status || bench_Chole_decomp();
+        else if( std::strcmp( argv[i], "-bench_Chole_decomp_pivot" ) == 0 )
+            status = status || bench_Chole_decomp_pivot();
         else
         {
             std::cerr << "invalid command: " << argv[i] << std::endl;

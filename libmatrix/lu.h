@@ -38,17 +38,21 @@ public:
     int lu_decomp();
     int lu_decomp_partial();
     int chole_decomp();
+    int chole_decomp_pivoting();
     Matrix get_lower();
     Matrix get_upper();
     Matrix get_chole();
     LinearSolverStatus get_status() { return status; }
     Matrix solve_vec( const Matrix& b );
+    Matrix solve_vec_chole( const Matrix& b );
     int find_max( int j );
+    int find_max_pivot( int j );
     std::tuple<int,int> find_max_complete( int idx );
     Matrix permute_vec( const Matrix& b );
     Matrix permute_vec_q( const Matrix& b );
     Matrix permute();
     Matrix permute( const Matrix& mat );
+    Matrix permute_chole( const Matrix& mat );
     int rank();
     Matrix matrix_lu() { return _mat; }
 };
