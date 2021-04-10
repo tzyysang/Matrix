@@ -6,14 +6,16 @@ namespace mx
 LinearSolver::LinearSolver()
 :   status(EMPTY),
     mode(NONE),
-    abs_threshold(1e-16)
+    abs_threshold(1e-16),
+    _rank(-1)
 {
 }
 
 LinearSolver::LinearSolver( const Matrix& mat )
 :   status(EMPTY),
     mode(NONE),
-    abs_threshold(1e-16)
+    abs_threshold(1e-16),
+    _rank(-1)
 {
     set_matrix(mat);
 }
@@ -34,6 +36,7 @@ void LinearSolver::set_matrix( const Matrix& mat )
     for( int i=0; i<col; i++ )
         q_perm[i] = i;
 
+    _rank = -1;
     status = MAT_SET;
 }
 
@@ -165,8 +168,11 @@ int LinearSolver::chole_decomp_pivoting()
     {
         int q = find_max_pivot( k );
 
-        q = k;
-        if( _mat(q,q)<=0.0 ) return -1;
+        if( _mat(q,q)<=0.0 )
+        {
+            _rank = k;
+            return -1;
+        }
 
         res.swap_col(k, q);
         _mat.swap_col(k, q);
@@ -209,11 +215,6 @@ int LinearSolver::chole_decomp()
             double sum = 0.0;
             for( int k=0; k<j; k++ )
                 sum += _mat(i,k) * _mat(j,k);
-
-            if( _mat(i,i) - sum < 0.0 )
-            {
-                std::cout << _mat(i,i) << ", " << sum << std::endl;
-            }
 
             if( i==j )
                 _mat(i,j) = sqrt( _mat(i,i) - sum );
@@ -378,18 +379,53 @@ Matrix LinearSolver::permute_chole( const Matrix& mat )
 int LinearSolver::rank()
 {
     int size = _mat.n_row();
+    if( _rank!=-1 ) return _rank;
     if( mode!=COMPLETE_LU ) return size;
 
     double threshold = _mat(0,0) * abs_threshold * size;
     for( int i=0; i<size; i++ )
-        if( std::abs(_mat(i,i)) < threshold ) return i;
-    return size;
+        if( std::abs(_mat(i,i)) < threshold ) return _rank = i;
+    return _rank = size;
 }
 
 Matrix LinearSolver::solve_vec_chole( const Matrix& b )
 {
-    assert( "TODO" );
-    return Matrix();
+    auto [row, col] = _mat.size();
+    Matrix y( row, 1 );
+    Matrix x( row, 1 );
+    int r = rank();
+
+    Matrix P_mat = Eye(row);
+    for( int i=0; i<row; i++ )
+    {
+        P_mat.swap_col( perm[i], i );
+    }
+
+    Matrix pb = P_mat.transpose()*b;
+
+    /// solve L
+    for( int i=0; i<r; i++ )
+    {
+        y(i,0) += pb(i,0);
+        for( int j=0; j<i; j++ )
+        {
+            y(i,0) -= _mat(i,j) * y(j,0);
+        }
+        y(i,0) /= _mat(i,i);
+    }
+
+    /// solve L^*
+    for( int i=row-1; i>=0; i-- )
+    {
+        x(i,0) += y(i,0);
+        for( int j=row-1; j>i; j-- )
+        {
+            x(i,0) -= _mat(j,i) * x(j,0);
+        }
+        x(i,0) /= _mat(i,i);
+    }
+
+    return P_mat * x;
 }
 
 Matrix LinearSolver::solve_vec( const Matrix& b )

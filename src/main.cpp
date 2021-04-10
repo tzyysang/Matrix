@@ -85,7 +85,6 @@ static int bench_LU_complete()
     int size = 300;
     mx::Matrix mat = mx::RandSPD(size);
 
-
     mx::Matrix b_vecs = mx::Rand(size);
     mx::LinearSolver ls(mat);
     ls.lu_decomp();
@@ -159,7 +158,7 @@ static int bench_LU_solve_complete()
 static int bench_Chole_decomp()
 {
     /// test cholesky decomposition, no pivoting
-    int size = 16;
+    int size = 10;
     mx::Matrix mat = mx::RandSPD( size );
     mx::LinearSolver ls( mat );
     int status = ls.chole_decomp();
@@ -208,17 +207,6 @@ static int bench_Chole_decomp_pivot()
     auto LL = L * L.transpose();
     auto M = ls.permute_chole( mat );
 
-    mx::LinearSolver ls2( mat );
-    ls2.chole_decomp();
-    auto L2 = ls2.get_chole();
-    auto LL2 = L2 * L2.transpose();
-    double error2 = 0.0;
-
-    Eigen::LLT<Eigen::MatrixXd> eig_ll( eig_mat );
-    Eigen::MatrixXd eig_L = eig_ll.matrixL();
-    Eigen::MatrixXd eig_LL = eig_L * eig_L.transpose();
-    double error_eig = 0.0;
-
     double error = 0.0;
     for( int i=0; i<size; i++ )
     {
@@ -227,14 +215,30 @@ static int bench_Chole_decomp_pivot()
             error += std::abs( M(i,j) - LL(i,j) );
             if( std::isnan( LL(i,j) ) ) return -1;
             if( !apprx_equal( M(i,j), LL(i,j) ) ) return -1;
-
-            error2 += std::abs( mat(i,j) - LL2(i,j) );
-            error_eig += std::abs( mat(i,j) - eig_LL(i,j) );
         }
     }
-    std::cout << "error = " << error << std::endl;
-    std::cout << "error2 = " << error2 << std::endl;
-    std::cout << "error_eig = " << error_eig << std::endl;
+    std::cout << "LL^* error = " << error << std::endl;
+    if( error > 1e-15*size*size ) return -1;
+
+    /// Solve Ax=b problems
+    double mae = 0.0;
+    mx::Matrix b_vecs = mx::Rand(size);
+    for( int i=0; i<size; i++ )
+    {
+        auto b = b_vecs.submatrix(0,-1,i,i);
+        auto x = ls.solve_vec( b );
+        auto bb = mat * x;
+
+        for( int j=0; j<size; j++ )
+        {
+            if( std::isnan( x(j) ) ) return -1;
+            //if( !apprx_equal( bb(j), b(j), 1e-2 ) ) return -1;
+        }
+        mae += (bb-b).norm();
+    }
+    mae = mae/size/size;
+    std::cout << "root MAE = " << mae << std::endl;
+    if( mae > 0.1 ) return -1;
 
     return 0;
 }

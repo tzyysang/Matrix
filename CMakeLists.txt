@@ -53,3 +53,4 @@ add_test(LU_solve_partial ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_LU_so
 add_test(LU_complete ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_LU_complete")
 add_test(LU_solve_complete ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_LU_solve_complete")
 add_test(Cholesky_decmop ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_Chole_decomp")
+add_test(Cholesky_decmop_pivot ${PROJECT_SOURCE_DIR}/build/matrix_bench "-bench_Chole_decomp_pivot")

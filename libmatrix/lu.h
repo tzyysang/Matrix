@@ -30,6 +30,7 @@ class LinearSolver
     std::vector<int> perm;
     std::vector<int> q_perm;
     double abs_threshold;
+    int _rank;
 
 public:
     LinearSolver();
